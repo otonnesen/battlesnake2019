@@ -3,6 +3,16 @@ class point:
         self.x = point['x']
         self.y = point['y']
 
+    def move(self, move):
+        if move == 'up':
+            return self.up()
+        if move == 'down':
+            return self.down()
+        if move == 'left':
+            return self.left()
+        if move == 'right':
+            return self.right()
+
     def up(self):
         return point({'x':self.x, 'y':self.y-1})
 
@@ -34,7 +44,7 @@ class point:
             self.y < 0 or self.y >= data.board.height):
             return False
         for snake in data.board.snakes:
-            for p in snake.body:
+            for p in snake.body[:-1]:
                 if p == self:
                     return False
         return True
@@ -92,6 +102,9 @@ class snake:
         self.health = snake['health']
         self.id = snake['id']
         self.name = snake['name']
+
+    def __str__(self):
+        return '['+','.join([str(i) for i in self.body])+']'
 
     def __repr__(self):
         return 'snake(name:{},id:{},health:{},body:{})'\
