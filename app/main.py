@@ -1,9 +1,12 @@
 import json
 import os
 import bottle
+import pprint
 
 from api import ping_response, start_response, move_response, end_response
-from ai import logic
+from logic import logic
+
+pp = pprint.PrettyPrinter(indent=4)
 
 @bottle.post('/ping')
 def ping():
@@ -12,6 +15,7 @@ def ping():
 @bottle.post('/start')
 def start():
     data = bottle.request.json
+    pp.pprint(data)
     #color = "#f1f1f1"
     color = "#ff0000"
     return start_response(color)
@@ -19,12 +23,14 @@ def start():
 @bottle.post('/move')
 def move():
     data = bottle.request.json
+    pp.pprint(data)
     direction = logic(data)
     return move_response(direction)
 
 @bottle.post('/end')
 def end():
     data = bottle.request.json
+    pp.pprint(data)
     return end_response()
 
 application = bottle.default_app()
