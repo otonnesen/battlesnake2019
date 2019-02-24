@@ -1,6 +1,5 @@
 import json
 from copy import deepcopy
-import datetime
 
 import obj
 
@@ -11,10 +10,7 @@ def logic(data):
        do minimax
     return highest value move
     '''
-    start = datetime.datetime.now()
     moves = {p:minimax(get_board_state(data, {data.you.id:p}), 2, data.you.id) for p in data.you.body[0].neighbors() if p.valid(data)}
-    diff = datetime.datetime.now()-start
-    print(diff.microseconds/1000)
     return data.you.body[0].direction_str(max(moves, key=moves.get))
 
 def get_snake(data, snakeid):
@@ -34,13 +30,13 @@ def minimax(data, depth, snakeid):
         return get_board_value(data, snakeid)
     if snakeid == data.you.id:
         value = -float('inf')
-        for i in [i for i in data.you.body[0].neighbors() if i.valid(data)]:
-            value = max(value, minimax(get_board_state(data, {data.you.id:i}), depth-1, snakeid))
+        for i in data.you.body[0].neighbors():
+            if i.valid(data):
+                value = max(value, minimax(get_board_state(data, {data.you.id:i}), depth-1, snakeid))
         return value
     else:
         # TODO
         pass
-
 
 def get_board_state(data, moves):
     r = deepcopy(data)
@@ -77,11 +73,30 @@ def get_board_value(data, snakeid):
     *Probably do these first
     '''
     snake = get_snake(data, snakeid)
-    return -float('inf') if snake == None else max([floodfill(data, i) for i in snake.body[0].neighbors()])
+    return -float('inf') if snake == None else max([floodfilli(data, i) for i in snake.body[0].neighbors()])
 
 '''
 return the number of spaces reachable from a given point
 '''
+def floodfilli(data, point):
+    '''
+    Runs about 1.4 times as fast as the recursive version.
+    '''
+    if not point.valid(data):
+        return 0
+    visited = set()
+    stack = [point]
+    s = 0
+    while len(stack) != 0:
+        p = stack.pop()
+        if p not in visited:
+            s += 1
+            visited.add(p)
+            for i in p.neighbors():
+                if i not in visited and p.valid(data):
+                    stack.append(i)
+    return s
+
 def floodfill(data, point):
     if not point.valid(data):
         return 0

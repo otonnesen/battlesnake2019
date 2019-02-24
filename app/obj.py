@@ -95,7 +95,7 @@ class board:
     def __repr__(self):
         return 'board(height:{},width:{},food:{},snakes:{})'\
                 .format(self.height, self.width, self.food, self.snakes)
-                
+
 class snake:
     def __init__(self, snake):
         self.body = [point(i) for i in snake['body']]
@@ -123,4 +123,3 @@ class data:
     def __repr__(self):
         return 'data(id:{},turn:{},you:{},board:{})'\
                 .format(self.gameid, self.turn, self.you.id, self.board.__repr__())
-
