@@ -39,11 +39,11 @@ class point:
     def neighbors(self):
         return [self.up(), self.down(), self.left(), self.right()]
 
-    def valid(self, data):
-        if (self.x < 0 or self.x >= data.board.width or
-            self.y < 0 or self.y >= data.board.height):
+    def valid(self, board):
+        if (self.x < 0 or self.x >= board.width or
+            self.y < 0 or self.y >= board.height):
             return False
-        for snake in data.board.snakes:
+        for snake in board.snakes:
             for p in snake.body[:-1]:
                 if p == self:
                     return False
@@ -67,6 +67,13 @@ class board:
         self.height = board['height']
         self.width= board['width']
         self.snakes = [snake(i) for i in board['snakes']]
+
+    def get_snake(self, snakeid):
+        try:
+            return {s.id:s for s in self.snakes}[snakeid]
+        except KeyError:
+            return None
+
 
     def __str__(self):
         s = []

@@ -2,6 +2,7 @@ import json
 from copy import deepcopy
 
 import obj
+from heuristic import get_board_value
 
 def logic(data):
     '''
@@ -10,41 +11,35 @@ def logic(data):
        do minimax
     return highest value move
     '''
-    moves = {p:minimax(get_board_state(data, {data.you.id:p}), 2, data.you.id) for p in data.you.body[0].neighbors() if p.valid(data)}
+    moves = {p:minimax(get_state(data, {data.you.id:p}), 2, data.you.id) for p in data.you.body[0].neighbors() if p.valid(data.board)}
     return data.you.body[0].direction_str(max(moves, key=moves.get))
 
-def get_snake(data, snakeid):
-    try:
-        return {s.id:s for s in data.board.snakes}[snakeid]
-    except KeyError:
-        return None
-
 def get_max_move(data, snakeid):
-    snake = get_snake(data, snakeid)
+    snake = data.get_snake(snakeid)
 
 def minimax(data, depth, snakeid):
     '''
     currently only accounting for myself
     '''
     if depth == 0:
-        return get_board_value(data, snakeid)
+        return get_board_value(data.board, snakeid)
     if snakeid == data.you.id:
         value = -float('inf')
         for i in data.you.body[0].neighbors():
-            if i.valid(data):
-                value = max(value, minimax(get_board_state(data, {data.you.id:i}), depth-1, snakeid))
+            if i.valid(data.board):
+                value = max(value, minimax(get_state(data, {data.you.id:i}), depth-1, snakeid))
         return value
     else:
         # TODO
         pass
 
-def get_board_state(data, moves):
+def get_state(data, moves):
     r = deepcopy(data)
     for snakeid, move in moves.items():
-        snake = get_snake(r, snakeid)
+        snake = r.board.get_snake(snakeid)
         if snake == None:
             continue
-        if not move.valid(r):
+        if not move.valid(r.board):
             r.board.snakes.remove(snake)
             continue
         snake.body.insert(0, move)
@@ -60,65 +55,6 @@ def get_board_state(data, moves):
             r.you.body.insert(0, move)
 
     return r
-
-def get_board_value(data, snakeid):
-    '''
-    Things to take into account:
-    *Free space
-    Number of escape paths available
-    Ratio of hunger:distance to food
-    *Kill smaller snake?
-    *Die to larger/same size snake?
-    ______________________________
-    *Probably do these first
-    '''
-    snake = get_snake(data, snakeid)
-    return -float('inf') if snake == None else max([floodfilli(data, i) for i in snake.body[0].neighbors()])
-
-'''
-return the number of spaces reachable from a given point
-'''
-def floodfilli(data, point):
-    '''
-    Runs about 1.4 times as fast as the recursive version.
-    '''
-    if not point.valid(data):
-        return 0
-    visited = set()
-    stack = [point]
-    s = 0
-    while len(stack) != 0:
-        p = stack.pop()
-        if p not in visited:
-            s += 1
-            visited.add(p)
-            for i in p.neighbors():
-                if i not in visited and p.valid(data):
-                    stack.append(i)
-    return s
-
-def floodfill(data, point):
-    if not point.valid(data):
-        return 0
-    visited = set()
-    visited.add(point)
-    s = 1
-    for i in point.neighbors():
-        s += floodfillr(data, i, visited)
-    return s
-
-def floodfillr(data, point, visited):
-    if point in visited or not point.valid(data):
-        return 0
-    visited.add(point)
-    s = 1
-    for i in point.neighbors():
-        s += floodfillr(data, i, visited)
-    return s
-
-def foodratio(data, snakeid):
-    snake = get_snake(data, snakeid)
-
 
 def main():
     with open('../data/move.json') as move:
