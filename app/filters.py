@@ -57,8 +57,11 @@ Filters move which __may__ contain a snake of equal
 or greater length's head next turn.
 '''
 def head_f(data, moves):
-    head_moves = functools.reduce(lambda x,y: x+y, [s.head().neighbors() for s in data.board.snakes])
+    head_moves = sum([s.head().neighbors() for s in data.board.snakes if s.id != data.you.id and len(s.body) >= len(data.you.body)], [])
     r = list(filter(lambda x: x not in head_moves, moves))
+    if len(r) == 0:
+        head_moves = sum([s.head().neighbors() for s in data.board.snakes if s.id != data.you.id and len(s.body) > len(data.you.body)], [])
+        r = list(filter(lambda x: x not in head_moves, moves))
     return r if len(r) != 0 else moves
 
 '''
@@ -111,13 +114,15 @@ filter applied
 
 grow = [food_s, food_f, freespace_f, head_f, legal_f]
 
-stagnate = [freespace_s, head_f, tail_f, avoidfood_f, legal_f]
+stagnate = [freespace_s, tail_f, avoidfood_f, head_f, legal_f]
 
 aggressive = [legal_f]
 
 def get_move(data):
     # TODO: Add logic to choose different sets of filters
-    if foodratio(data) <= 2:
+    # TODO: Take into account whether or not another snake
+    # will get to the food I'm trying to get before me
+    if foodratio(data) <= 4:
         return apply_filters(grow, data)[0]
     return apply_filters(stagnate, data)[0]
 
