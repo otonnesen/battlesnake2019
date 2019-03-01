@@ -120,7 +120,6 @@ Returns nearest the ratio of your health to distance to food
 '''
 def foodratio(data):
     food = data.metadata.headmeta.close_food
-    print(data.metadata.headmeta.close_food)
     return 0 if food is None else data.you.health/data.you.head().distance_to(food)
 
 '''
@@ -171,8 +170,8 @@ def get_move(data):
     return apply_filters(stagnate, data)[0]
 
 def main():
-    data = obj.Data(test.g1)
-    print(apply_filters(aggressive, data))
+    data = obj.Data(test.g2)
+    print(get_move(data))
     return
     with open('../data/move.json') as move:
         data = obj.Data(json.loads(move.read()))

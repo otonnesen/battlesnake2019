@@ -175,7 +175,8 @@ class Metadata:
                 for y in range(data.board.height)])
         for s in data.board.snakes+[data.you]:
             for i in s.body[:-1]:
-                self.safe.remove(i)
+                if i in self.safe:
+                    self.safe.remove(i)
         # self.tails = set([s.body[-1] for s in data.board.snakes])
         self.tails = {s.tail():s for s in data.board.snakes}
         self.heads = {s.head():s for s in data.board.snakes if s.id != data.you.id}
