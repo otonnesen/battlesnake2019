@@ -53,11 +53,13 @@ def tail_f(data, moves):
     return r if len(r) != 0 else moves
 
 '''
-Sorts moves by available free space in decreasing order.
+Filters move which __may__ contain a snake of equal
+or greater length's head next turn.
 '''
-def freespace_s(data, moves):
-    s = {m:data.metadata.moves[m].free_space for m in moves}
-    return sorted(moves, key=lambda x: s[x], reverse=True)
+def head_f(data, moves):
+    head_moves = functools.reduce(lambda x,y: x+y, [s.head().neighbors() for s in data.board.snakes])
+    r = list(filter(lambda x: x not in head_moves, moves))
+    return r if len(r) != 0 else moves
 
 '''
 Filters moves which contain food.
@@ -74,6 +76,13 @@ If no moves satisy this property, returns moves.
 def food_f(data, moves):
     r = list(filter(lambda x: data.metadata.moves[x].close_food is not None, moves))
     return r if len(r) != 0 else moves
+
+'''
+Sorts moves by available free space in decreasing order.
+'''
+def freespace_s(data, moves):
+    s = {m:data.metadata.moves[m].free_space for m in moves}
+    return sorted(moves, key=lambda x: s[x], reverse=True)
 
 '''
 Sorts moves by distance to food in increasing order.
@@ -100,9 +109,11 @@ out the sorting done by all but the last (first in the list)
 filter applied
 '''
 
-grow = [food_s, food_f, freespace_f, legal_f]
+grow = [food_s, food_f, freespace_f, head_f, legal_f]
 
-stagnate = [freespace_s, tail_f, avoidfood_f, legal_f]
+stagnate = [freespace_s, head_f, tail_f, avoidfood_f, legal_f]
+
+aggressive = [legal_f]
 
 def get_move(data):
     # TODO: Add logic to choose different sets of filters
@@ -113,9 +124,10 @@ def get_move(data):
 def main():
     with open('../data/move.json') as move:
         data = obj.Data(json.loads(move.read()))
-        print(data.metadata.headmeta)
-        print(apply_filters(grow, data))
-        print(foodratio(data))
+        # print(head_f(data, data.you.head().neighbors()))
+        # print(data.metadata.headmeta)
+        # print(apply_filters(grow, data))
+        # print(foodratio(data))
 
 if __name__ == '__main__':
     main()
