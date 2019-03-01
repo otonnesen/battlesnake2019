@@ -60,12 +60,21 @@ def freespace_s(data, moves):
     return sorted(moves, key=lambda x: s[x], reverse=True)
 
 '''
+Filters moves which contain food.
+If no moves satisy this property, returns moves.
+'''
+def avoidfood_f(data, moves):
+    r = list(filter(lambda x: x not in data.metadata.food, moves))
+    return r if len(r) != 0 else moves
+
+'''
 Filters moves from which no food is reachable.
 If no moves satisy this property, returns moves.
 '''
 def food_f(data, moves):
     r = list(filter(lambda x: data.metadata.moves[x].close_food is not None, moves))
     return r if len(r) != 0 else moves
+
 '''
 Sorts moves by distance to food in increasing order.
 '''
@@ -91,7 +100,7 @@ filter applied
 
 grow = [food_s, food_f, freespace_f, legal_f]
 
-stagnate = [freespace_s, tail_f, legal_f]
+stagnate = [freespace_s, tail_f, avoidfood_f, legal_f]
 
 def get_move(data):
     # TODO: Add logic to choose different sets of filters
