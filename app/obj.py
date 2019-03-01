@@ -129,9 +129,10 @@ class Movemetadata:
     def __init__(self, data, metadata, m, head=False):
         self.free_space = 0     # Space reachable from this point
         self.close_food = None  # Closest point containing food
-        self.num_food = 0       # Amount of food reachable from this point
-        self.food = set()       # Food points reachable from this point
-        self.tail = False       # True if a snake's tail is reachable from this point
+        self.num_food = 0       # Amount of food reachable
+        self.food = set()       # Food points reachable
+        self.tail = False       # True if a snake's tail is reachable
+        self.smallhead = False  # True if a smaller snake's head is reachable
 
         if not m.valid(data.board) and not head:
             return
@@ -150,6 +151,9 @@ class Movemetadata:
                     self.food.add(p)
                 if p in metadata.tails:
                     self.tail = True
+                if p in [s.head() for s in data.board.snakes if\
+                        s.id != data.you.id and len(s.body) < len(you.body)]:
+                    self.smallhead = True
 
                 visited.add(p)
                 for i in p.neighbors():
@@ -169,11 +173,19 @@ class Metadata:
         for s in data.board.snakes:
             for i in s.body[:-1]:
                 self.safe.remove(i)
-        self.heads = set([s.body[0] for s in data.board.snakes])
-        self.tails = set([s.body[-1] for s in data.board.snakes])
+        # self.tails = set([s.body[-1] for s in data.board.snakes])
+        self.tails = {s.tail():s for s in data.board.snakes}
+        self.heads = {s.head():s for s in data.board.snakes}
         self.food = set(data.board.food)
         self.moves = {m:Movemetadata(data, self, m) for m in data.you.head().neighbors()}
         self.headmeta = Movemetadata(data, self, data.you.head(), True)
+
+    '''
+    Returns dict of smaller snakes' heads.
+    '''
+    def smaller_snake_heads(self, snake):
+        return dict(filter(lambda x: len(self.heads[x].body) < len(snake.body),\
+                self.heads))
 
 class Data:
     def __init__(self, data):
