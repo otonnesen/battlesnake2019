@@ -126,14 +126,14 @@ class Snake:
                 .format(self.name, self.id, self.health, self.body)
 
 class Movemetadata:
-    def __init__(self, data, metadata, m):
+    def __init__(self, data, metadata, m, head=False):
         self.free_space = 0     # Space reachable from this point
         self.close_food = None  # Closest point containing food
         self.num_food = 0       # Amount of food reachable from this point
         self.food = set()       # Food points reachable from this point
         self.tail = False       # True if a snake's tail is reachable from this point
 
-        if not m.valid(data.board):
+        if not m.valid(data.board) and not head:
             return
         visited = set()
         queue = [m]
@@ -172,7 +172,8 @@ class Metadata:
         self.heads = set([s.body[0] for s in data.board.snakes])
         self.tails = set([s.body[-1] for s in data.board.snakes])
         self.food = set(data.board.food)
-        self.moves = {m:Movemetadata(data, self, m) for m in data.you.body[0].neighbors()}
+        self.moves = {m:Movemetadata(data, self, m) for m in data.you.head().neighbors()}
+        self.headmeta = Movemetadata(data, self, data.you.head(), True)
 
 class Data:
     def __init__(self, data):

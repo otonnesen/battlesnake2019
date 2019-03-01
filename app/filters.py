@@ -84,13 +84,15 @@ def food_s(data, moves):
 def dist_to_food(data, move):
     assert move in data.metadata.moves
     food = data.metadata.moves[move].close_food
-    return float('inf') if food is None else data.you.head().distance_to(food)
+    return float('inf') if food is None else move.distance_to(food)
 
 '''
-Returns nearest integer to the ratio of your health to distance to food
+Returns nearest the ratio of your health to distance to food
 '''
-def foodratio(data, move):
-    return data.you.health/dist_to_food(data, move)
+def foodratio(data):
+    food = data.metadata.headmeta.close_food
+    print(data.metadata.headmeta.close_food)
+    return 0 if food is None else data.you.health/data.you.head().distance_to(food)
 
 '''
 Warning: Using more than one sorting filter will obviously wipe
@@ -104,14 +106,16 @@ stagnate = [freespace_s, tail_f, avoidfood_f, legal_f]
 
 def get_move(data):
     # TODO: Add logic to choose different sets of filters
-    if min(foodratio(data, m) for m in data.metadata.moves) <= 2:
+    if foodratio(data) <= 2:
         return apply_filters(grow, data)[0]
     return apply_filters(stagnate, data)[0]
 
 def main():
     with open('../data/move.json') as move:
         data = obj.Data(json.loads(move.read()))
+        print(data.metadata.headmeta)
         print(apply_filters(grow, data))
+        print(foodratio(data))
 
 if __name__ == '__main__':
     main()
