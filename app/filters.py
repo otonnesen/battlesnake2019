@@ -1,3 +1,9 @@
+'''
+Contains a bunch of filters -- denoted by a '_f' appended to the function
+name -- and sorters -- denoted by a '_s' appended to the function name.
+A filter attempts to remove any moves not satisfying a particular property.
+A sorter rearranges the order of the moves (and should thus be applied last)
+'''
 import obj
 import json
 import sys
@@ -14,17 +20,13 @@ def get_board_value(board, snakeid):
     ______________________________
     *Probably do these first
     '''
-    snake = board.get_snake(snakeid)
-    if snake == None: # Snake is dead
-        return -float('inf')
-    return max([floodfill(board, i, snake.id, True) for i in snake.body[0].neighbors()])
+    pass
 
 '''
 Composes filters starting with moves
 '''
 def apply_filters(filters, data):
-    compose = lambda f,g: lambda x: f(data, g(data, x))
-    return functools.reduce(compose, filters)(data.metadata.moves)
+    return functools.reduce(lambda f,g: lambda x,y: f(x, g(x, y)), filters)(data, data.you.head().neighbors())
 
 '''
 Filters illegal moves
@@ -34,13 +36,12 @@ def legal_f(data, moves):
 
 '''
 Filters moves leading to spaces smaller than the size of your snake.
-If no moves satisfy this property, retuns a list sorted in decreasing
-order of avaiable space it leads to.
+If no moves satisfy this property, retuns moves.
 '''
-def floodfill_f(data, moves):
+def freespace_f(data, moves):
     s = {m:data.metadata.moves[m].free_space for m in moves}
     r = list(filter(lambda x: s[x] > len(data.you.body), s.keys()))
-    return r if len(r) != 0 else sorted(moves, key=lambda x: s[x], reverse=True)
+    return r if len(r) != 0 else moves
 
 '''
 Filters moves from which a tail is not reachable.
@@ -48,15 +49,49 @@ If no moves satisfy this property, retuns moves.
 '''
 def tail_f(data, moves):
     r = list(filter(lambda x: data.metadata.moves[x].tail, moves))
-    return moves
+    return r if len(r) != 0 else moves
+
+'''
+Sorts moves by available free space in decreasing order.
+'''
+def freespace_s(data, moves):
+    s = {m:data.metadata.moves[m].free_space for m in moves}
+    return sorted(moves, key=lambda x: s[x], reverse=True)
 
 
-def foodratio(data, snakeid):
-    snake = data.board.get_snake(snakeid)
+'''
+Filters moves from which no food is reachable.
+If no moves satisy this property, returns moves.
+'''
+def food_f(data, moves):
+    r = list(filter(lambda x: data.metadata.moves[x].close_food is not None, moves))
+    return r if len(r) != 0 else moves
+'''
+Sorts moves by distance to food in increasing order.
+'''
+def food_s(data, moves):
+    return sorted(moves, key=lambda x: dist_to_food(data, x))
 
-grow = [floodfill_f, legal_f]
+def dist_to_food(data, move):
+    assert move in data.metadata.moves
+    return data.you.head().distance_to(data.metadata.moves[move].close_food)
 
-stagnate = [tail_f, legal_f]
+
+'''
+Returns nearest integer to the ratio of your health to distance to food
+'''
+def foodratio(data, move):
+    return data.you.health/dist_to_food(data, move)
+
+'''
+Warning: Using more than one sorting filter will obviously wipe
+out the sorting done by all but the last (first in the list)
+filter applied
+'''
+
+grow = [food_s, food_f, freespace_f, legal_f]
+
+stagnate = [freespace_s, tail_f, legal_f]
 
 def get_move(data):
     # TODO: Add logic to choose different sets of filters
@@ -65,7 +100,8 @@ def get_move(data):
 def main():
     with open('../data/move.json') as move:
         data = obj.Data(json.loads(move.read()))
-        print(apply_filters(stagnate, data))
+        # print(food_s(data, food_f(data, freespace_f(data, legal_f(data, data.you.head().neighbors())))))
+        print(apply_filters(grow, data))
         # print(data.metadata.moves[list(data.metadata.moves.keys())[2]])
 
 if __name__ == '__main__':

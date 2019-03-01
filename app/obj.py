@@ -25,6 +25,9 @@ class Point:
     def right(self):
         return Point({'x':self.x+1, 'y':self.y})
 
+    def distance_to(self, other):
+        return abs(self.x-other.x)+abs(self.y-other.y)
+
     def direction_str(self, p):
         dx = p.x - self.x
         dy = p.y - self.y
@@ -109,6 +112,12 @@ class Snake:
         self.id = snake['id']
         self.name = snake['name']
 
+    def head(self):
+        return self.body[0]
+    
+    def tail(self):
+        return self.body[-1]
+
     def __str__(self):
         return '['+','.join([str(i) for i in self.body])+']'
 
@@ -118,11 +127,11 @@ class Snake:
 
 class Movemetadata:
     def __init__(self, data, metadata, m):
-        self.free_space = 0 # Space reachable from this point
-        self.close_food = None # Closest point containing food
-        self.num_food = 0 # Amount of food reachable from this point
-        self.food = set() # Food points reachable from this point
-        self.tail = False # True if a snake's tail is reachable from this point
+        self.free_space = 0     # Space reachable from this point
+        self.close_food = None  # Closest point containing food
+        self.num_food = 0       # Amount of food reachable from this point
+        self.food = set()       # Food points reachable from this point
+        self.tail = False       # True if a snake's tail is reachable from this point
 
         if not m.valid(data.board):
             return
