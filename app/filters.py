@@ -4,24 +4,13 @@ name -- and sorters -- denoted by a '_s' appended to the function name.
 A filter attempts to remove any moves not satisfying a particular property.
 A sorter rearranges the order of the moves (and should thus be applied last)
 '''
-import obj
 import json
 import sys
 import functools
 from datetime import datetime as dt
 
-def get_board_value(board, snakeid):
-    '''
-    Things to take into account:
-    *Free space
-    Number of escape paths available
-    Ratio of hunger:distance to food
-    *Kill smaller snake?
-    *Die to larger/same size snake?
-    ______________________________
-    *Probably do these first
-    '''
-    pass
+import obj
+import test
 
 '''
 Composes filters starting with moves
@@ -40,6 +29,7 @@ Filters moves leading to spaces smaller than the size of your snake.
 If no moves satisfy this property, retuns moves.
 '''
 def freespace_f(data, moves):
+    # TODO: Maybe size of snake + amount of food in space + a margin?
     s = {m:data.metadata.moves[m].free_space for m in moves}
     r = list(filter(lambda x: s[x] > len(data.you.body), s.keys()))
     return r if len(r) != 0 else moves
@@ -133,6 +123,23 @@ def foodratio(data):
     print(data.metadata.headmeta.close_food)
     return 0 if food is None else data.you.health/data.you.head().distance_to(food)
 
+'''
+Returns True if this move leads to a loss within x turns, else False.
+(Pretty much depth-limited minimax)
+'''
+def going_to_die(data, move, x):
+    #TODO:  Find distance between you and the other snakes' heads.
+    #       If greater than x, these snakes' moves cannot directly
+    #       affect you during the timeframe being considered, and
+    #       so its moves need not be calculated.
+    affecting_snakes = [s for i in data.board.snakes if data.you.head().distance_to(s.head()) <= x]
+    pass
+
+'''
+Takes your move and returns a list of possible board states.
+'''
+def get_states(data, move, x):
+    pass
 
 '''
 Warning: Using more than one sorting filter will obviously wipe
@@ -146,10 +153,12 @@ starving = [food_s, food_f, head_f, legal_f]
 
 stagnate = [freespace_s, tail_f, avoidfood_f, head_f, legal_f]
 
-aggressive = [track_s, kill_f, track_f, head_f, legal_f]
+aggressive = [track_s, kill_f, track_f, freespace_f, head_f, legal_f]
 
 def get_move(data):
-    return apply_filters(aggressive, data)[0] #TODO: For testing; remove
+    if foodratio(data) > 50 and len(data.you.body) > 10:
+        return apply_filters(aggressive, data)[0] #TODO: For testing; remove
+    return apply_filters(grow, data)[0]
     # TODO: Add logic to choose different sets of filters
     # TODO: Take into account whether or not another snake
     # will get to the food I'm trying to get before me
@@ -162,6 +171,9 @@ def get_move(data):
     return apply_filters(stagnate, data)[0]
 
 def main():
+    data = obj.Data(test.g1)
+    print(apply_filters(aggressive, data))
+    return
     with open('../data/move.json') as move:
         data = obj.Data(json.loads(move.read()))
         # print(apply_filters(aggressive, data)[0])

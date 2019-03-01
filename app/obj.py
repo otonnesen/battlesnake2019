@@ -114,9 +114,12 @@ class Snake:
 
     def head(self):
         return self.body[0]
-    
+
     def tail(self):
         return self.body[-1]
+
+    def smaller_than(self, other):
+        return len(self.body) < len(other.body)
 
     def __str__(self):
         return '['+','.join([str(i) for i in self.body])+']'
@@ -152,7 +155,7 @@ class Movemetadata:
                 if p in metadata.tails:
                     self.tail = True
                 if p in [s.head() for s in data.board.snakes if\
-                        s.id != data.you.id and len(s.body) < len(you.body)]:
+                        s.id != data.you.id and len(s.body) < len(data.you.body)]:
                     self.smallhead = True
 
                 visited.add(p)
@@ -170,12 +173,12 @@ class Metadata:
         self.safe = set([Point({'x':x,'y':y})\
                 for x in range(data.board.width)\
                 for y in range(data.board.height)])
-        for s in data.board.snakes:
+        for s in data.board.snakes+[data.you]:
             for i in s.body[:-1]:
                 self.safe.remove(i)
         # self.tails = set([s.body[-1] for s in data.board.snakes])
         self.tails = {s.tail():s for s in data.board.snakes}
-        self.heads = {s.head():s for s in data.board.snakes}
+        self.heads = {s.head():s for s in data.board.snakes if s.id != data.you.id}
         self.food = set(data.board.food)
         self.moves = {m:Movemetadata(data, self, m) for m in data.you.head().neighbors()}
         self.headmeta = Movemetadata(data, self, data.you.head(), True)
@@ -184,8 +187,7 @@ class Metadata:
     Returns dict of smaller snakes' heads.
     '''
     def smaller_snake_heads(self, snake):
-        return dict(filter(lambda x: len(self.heads[x].body) < len(snake.body),\
-                self.heads))
+        return list(filter(lambda x: self.heads[x].smaller_than(snake), self.heads))
 
 class Data:
     def __init__(self, data):
