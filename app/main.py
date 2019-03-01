@@ -23,7 +23,7 @@ def start():
 
 @bottle.post('/move')
 def move():
-    data = obj.data(bottle.request.json)
+    data = obj.Data(bottle.request.json)
     print(data)
     direction = logic(data)
     return api.move_response(direction)

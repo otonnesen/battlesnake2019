@@ -8,6 +8,7 @@ import obj
 import json
 import sys
 import functools
+from datetime import datetime as dt
 
 def get_board_value(board, snakeid):
     '''
@@ -58,7 +59,6 @@ def freespace_s(data, moves):
     s = {m:data.metadata.moves[m].free_space for m in moves}
     return sorted(moves, key=lambda x: s[x], reverse=True)
 
-
 '''
 Filters moves from which no food is reachable.
 If no moves satisy this property, returns moves.
@@ -74,8 +74,8 @@ def food_s(data, moves):
 
 def dist_to_food(data, move):
     assert move in data.metadata.moves
-    return data.you.head().distance_to(data.metadata.moves[move].close_food)
-
+    food = data.metadata.moves[move].close_food
+    return float('inf') if food is None else data.you.head().distance_to(food)
 
 '''
 Returns nearest integer to the ratio of your health to distance to food
@@ -95,14 +95,14 @@ stagnate = [freespace_s, tail_f, legal_f]
 
 def get_move(data):
     # TODO: Add logic to choose different sets of filters
+    if min(foodratio(data, m) for m in data.metadata.moves) <= 2:
+        return apply_filters(grow, data)[0]
     return apply_filters(stagnate, data)[0]
 
 def main():
     with open('../data/move.json') as move:
         data = obj.Data(json.loads(move.read()))
-        # print(food_s(data, food_f(data, freespace_f(data, legal_f(data, data.you.head().neighbors())))))
         print(apply_filters(grow, data))
-        # print(data.metadata.moves[list(data.metadata.moves.keys())[2]])
 
 if __name__ == '__main__':
     main()
