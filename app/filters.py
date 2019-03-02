@@ -28,7 +28,7 @@ def legal_f(data, moves):
 
 '''
 Filters moves leading to spaces smaller than the size of your snake.
-If no moves satisfy this property, retuns moves.
+If no moves satisfy this property, returns moves.
 '''
 def freespace_f(data, moves):
     # TODO: Maybe size of snake + amount of food in space + a margin?
