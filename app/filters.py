@@ -7,6 +7,7 @@ A sorter rearranges the order of the moves (and should thus be applied last)
 import json
 import sys
 import functools
+import itertools
 from datetime import datetime as dt
 
 import obj
@@ -126,20 +127,27 @@ def foodratio(data):
 Returns True if this move leads to a loss within x turns, else False.
 (Pretty much depth-limited minimax)
 '''
-def going_to_die(data, move, x):
-    #TODO:  Find distance between you and the other snakes' heads.
-    #       If greater than x, these snakes' moves cannot directly
-    #       affect you during the timeframe being considered, and
-    #       so its moves need not be calculated.
-    affecting_snakes = [s for i in data.board.snakes if data.you.head().distance_to(s.head()) <= x]
-    print(affecting_snakes)
-    pass
+def going_to_die(data, move, depth):
+    # TODO: Find distance between you and the other snakes' heads.
+    #       If greater than twice depth, these snakes' moves cannot
+    #       directly affect you during the timeframe being considered,
+    #       and so its moves need not be calculated.
+    # affecting_snakes = [s for i in data.board.snakes if data.you.head().distance_to(s.head()) <= x]
+    affecting_snakes = list(filter(lambda x: x.id != data.you.id and data.you.head().distance_to(x.head()) <= 2*depth, data.board.snakes))
+    get_states(data, affecting_snakes)
+    # TODO: Use data here to determine whether or not I actually die
+    return False
 
 '''
-Takes your move and returns a list of possible board states.
+Takes your move and returns a list corresponding to the cartesian product
+of possible moves by snakes in affecting_snakes.
 '''
-def get_states(data, move, x):
-    pass
+def get_states(data, affecting_snakes):
+    r = []
+    for i in itertools.product(*[legal_f(data, s.head().neighbors()) for s in affecting_snakes]):
+        m = {affecting_snakes[j]:i[j] for j in range(len(i))}
+        r.append(m)
+    return r
 
 '''
 Warning: Using more than one sorting filter will obviously wipe
@@ -167,17 +175,12 @@ def get_move(data):
     return apply_filters(stagnate, data)[0]
 
 def main():
-    data = obj.Data(test.g2)
-    print(get_move(data))
-    return
-    with open('../data/move.json') as move:
-        data = obj.Data(json.loads(move.read()))
-        # print(apply_filters(aggressive, data)[0])
-        print(track_s(data, legal_f(data, data.you.head().neighbors())))
-        # print(head_f(data, data.you.head().neighbors()))
-        # print(data.metadata.headmeta)
-        # print(apply_filters(grow, data))
-        # print(foodratio(data))
+    data = obj.Data(test.g4)
+    # print(going_to_die(data, data.you.head().left(), 10))
+    affecting_snakes = list(filter(lambda x: x.id != data.you.id and data.you.head().distance_to(x.head()) <= 8, data.board.snakes))
+    print(get_states(data, affecting_snakes))
+    # print(len(data.metadata.safe))
+    # print(data.board.width*data.board.height)
 
 if __name__ == '__main__':
     main()

@@ -122,11 +122,17 @@ class Snake:
         return len(self.body) < len(other.body)
 
     def __str__(self):
-        return '['+','.join([str(i) for i in self.body])+']'
+        return self.name+': ['+','.join([str(i) for i in self.body])+']'
 
     def __repr__(self):
         return 'Snake(name:{},id:{},health:{},body:{})'\
                 .format(self.name, self.id, self.health, self.body)
+
+    def __hash__(self):
+        return hash(self.id)
+
+    def __eq__(self, other):
+        return self.id == other.id
 
 class Movemetadata:
     def __init__(self, data, metadata, m, head=False):
@@ -173,7 +179,7 @@ class Metadata:
         self.safe = set([Point({'x':x,'y':y})\
                 for x in range(data.board.width)\
                 for y in range(data.board.height)])
-        for s in data.board.snakes+[data.you]:
+        for s in set(data.board.snakes+[data.you]):
             for i in s.body[:-1]:
                 if i in self.safe:
                     self.safe.remove(i)
