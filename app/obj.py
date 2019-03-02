@@ -46,10 +46,6 @@ class Point:
         if (self.x < 0 or self.x >= board.width or
             self.y < 0 or self.y >= board.height):
             return False
-        for snake in board.snakes:
-            for p in snake.body[:-1]:
-                if p == self:
-                    return False
         return True
 
     def __eq__(self, other):

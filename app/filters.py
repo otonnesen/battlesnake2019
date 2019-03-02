@@ -9,6 +9,7 @@ import sys
 import functools
 import itertools
 from datetime import datetime as dt
+from copy import deepcopy
 
 import obj
 import test
@@ -90,6 +91,17 @@ def food_f(data, moves):
     return r if len(r) != 0 else moves
 
 '''
+Returns a filter that filters moves that will lead to your
+certain death in x turns.
+If no moves satisy this property, returns moves.
+'''
+def die_in_x_f_generator(x):
+    def die_in_x_f(data, moves):
+        r = list(filter(lambda x: not going_to_die(data, moves, x), moves))
+        return r if len(r) != 0 else moves
+    return r
+
+'''
 Sorts moves by available free space in decreasing order.
 '''
 def freespace_s(data, moves):
@@ -132,21 +144,48 @@ def going_to_die(data, move, depth):
     #       If greater than twice depth, these snakes' moves cannot
     #       directly affect you during the timeframe being considered,
     #       and so its moves need not be calculated.
-    # affecting_snakes = [s for i in data.board.snakes if data.you.head().distance_to(s.head()) <= x]
-    affecting_snakes = list(filter(lambda x: x.id != data.you.id and data.you.head().distance_to(x.head()) <= 2*depth, data.board.snakes))
-    get_states(data, affecting_snakes)
+    die = False
+    if depth == 0:
+        return len(legal_f(data, move.neighbors())) == 0
+    affecting_snakes = list(filter(lambda x: x.id != data.you.id and\
+            data.you.head().distance_to(x.head()) <= 2*depth, data.board.snakes))
+    for m in get_potential_moves(data, affecting_snakes):
+        state = get_state(data, m)
+        die = going_to_die(data, get_move(data), depth-1)
     # TODO: Use data here to determine whether or not I actually die
-    return False
+    return die
 
 '''
 Takes your move and returns a list corresponding to the cartesian product
 of possible moves by snakes in affecting_snakes.
 '''
-def get_states(data, affecting_snakes):
+def get_potential_moves(data, affecting_snakes):
     r = []
     for i in itertools.product(*[legal_f(data, s.head().neighbors()) for s in affecting_snakes]):
         m = {affecting_snakes[j]:i[j] for j in range(len(i))}
         r.append(m)
+    return r
+
+def get_state(data, moves):
+    r = deepcopy(data)
+    for s, move in moves.items():
+        snake = r.board.get_snake(s.id)
+        if not move.valid(r.board):
+            r.board.snakes.remove(snake)
+            continue
+        if move in [sn.head() for sn in r.board.snakes if sn.id != s.id]:
+            r.board.snakes.remove(s if len(s.body) < len(sn.body) else sn)
+        snake.body.insert(0, move)
+        food = False
+        for f in r.board.food:
+            if f == move:
+                food = True
+        if not food:
+            snake.body.pop()
+        if s.id == data.you.id:
+            if not food:
+                r.you.body.pop()
+            r.you.body.insert(0, move)
     return r
 
 '''
@@ -178,7 +217,12 @@ def main():
     data = obj.Data(test.g4)
     # print(going_to_die(data, data.you.head().left(), 10))
     affecting_snakes = list(filter(lambda x: x.id != data.you.id and data.you.head().distance_to(x.head()) <= 8, data.board.snakes))
-    print(get_states(data, affecting_snakes))
+    s = dt.now()
+    for i in apply_filters(aggressive, data):
+        if not going_to_die(data, i, 4):
+            print(i)
+    s = dt.now()-s
+    print(s.microseconds/1000)
     # print(len(data.metadata.safe))
     # print(data.board.width*data.board.height)
 
