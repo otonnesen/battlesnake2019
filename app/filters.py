@@ -28,7 +28,7 @@ def legal_f(data, moves):
 
 '''
 Filters moves leading to spaces smaller than the size of your snake.
-If no moves satisfy this property, returns moves.
+If no moves satisfy this property, retuns moves.
 '''
 def freespace_f(data, moves):
     # TODO: Maybe size of snake + amount of food in space + a margin?
@@ -200,8 +200,12 @@ aggressive = [track_s, kill_f, track_f, freespace_f, head_f, legal_f]
 
 def get_move(data):
     if foodratio(data) > 50 and len(data.you.body) > 10:
-        return apply_filters(aggressive, data)[0] #TODO: For testing; remove
-    return apply_filters(grow, data)[0]
+        for i in apply_filters(aggressive, data): #TODO: For testing; remove
+            if not going_to_die(data, i, 4):
+                return i
+    for i in apply_filters(grow, data):
+        if not going_to_die(data, i, 4):
+            return i
     # TODO: Add logic to choose different sets of filters
     # TODO: Take into account whether or not another snake
     # will get to the food I'm trying to get before me
