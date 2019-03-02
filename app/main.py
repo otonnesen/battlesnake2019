@@ -16,7 +16,7 @@ def ping():
 @bottle.post('/start')
 def start():
     data = bottle.request.json
-    pp.pprint(data)
+    # pp.pprint(data)
     #color = "#f1f1f1"
     color = "#ff0000"
     return api.start_response(color)
@@ -24,14 +24,14 @@ def start():
 @bottle.post('/move')
 def move():
     data = obj.Data(bottle.request.json)
-    print(data)
+    # print(data)
     direction = logic(data)
     return api.move_response(direction)
 
 @bottle.post('/end')
 def end():
     data = bottle.request.json
-    pp.pprint(data)
+    # pp.pprint(data)
     return api.end_response()
 
 application = bottle.default_app()

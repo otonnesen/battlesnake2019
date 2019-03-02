@@ -132,6 +132,7 @@ def going_to_die(data, move, x):
     #       affect you during the timeframe being considered, and
     #       so its moves need not be calculated.
     affecting_snakes = [s for i in data.board.snakes if data.you.head().distance_to(s.head()) <= x]
+    print(affecting_snakes)
     pass
 
 '''
@@ -145,13 +146,9 @@ Warning: Using more than one sorting filter will obviously wipe
 out the sorting done by all but the last (first in the list)
 filter applied
 '''
-
 grow = [food_s, food_f, freespace_f, head_f, legal_f]
-
 starving = [food_s, food_f, head_f, legal_f]
-
 stagnate = [freespace_s, tail_f, avoidfood_f, head_f, legal_f]
-
 aggressive = [track_s, kill_f, track_f, freespace_f, head_f, legal_f]
 
 def get_move(data):
