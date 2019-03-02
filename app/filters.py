@@ -151,7 +151,17 @@ def going_to_die(data, move, depth):
             data.you.head().distance_to(x.head()) <= 2*depth, data.board.snakes))
     for m in get_potential_moves(data, affecting_snakes):
         state = get_state(data, m)
-        die = going_to_die(data, get_move(data), depth-1)
+        die = going_to_die_r(state, get_move(data, False), depth-1)
+    # TODO: Use data here to determine whether or not I actually die
+    return die
+
+def going_to_die_r(data, move, depth):
+    die = False
+    if depth == 0:
+        return len(legal_f(data, move.neighbors())) == 0
+    for m in get_potential_moves(data, data.board.snakes):
+        state = get_state(data, m)
+        die = going_to_die(state, get_move(data, False), depth-1)
     # TODO: Use data here to determine whether or not I actually die
     return die
 
@@ -173,8 +183,9 @@ def get_state(data, moves):
         if not move.valid(r.board):
             r.board.snakes.remove(snake)
             continue
-        if move in [sn.head() for sn in r.board.snakes if sn.id != s.id]:
-            r.board.snakes.remove(s if len(s.body) < len(sn.body) else sn)
+        for sn in [sn for sn in r.board.snakes if sn.id != s.id]:
+            if move == sn.head():
+                r.board.snakes.remove(s if len(s.body) < len(sn.body) else sn)
         snake.body.insert(0, move)
         food = False
         for f in r.board.food:
@@ -186,6 +197,7 @@ def get_state(data, moves):
             if not food:
                 r.you.body.pop()
             r.you.body.insert(0, move)
+    r.metadata = obj.Metadata(r)
     return r
 
 '''
@@ -198,13 +210,17 @@ starving = [food_s, food_f, head_f, legal_f]
 stagnate = [freespace_s, tail_f, avoidfood_f, head_f, legal_f]
 aggressive = [track_s, kill_f, track_f, freespace_f, head_f, legal_f]
 
-def get_move(data):
+def get_move(data, recur=True):
     if foodratio(data) > 50 and len(data.you.body) > 10:
         for i in apply_filters(aggressive, data): #TODO: For testing; remove
-            if not going_to_die(data, i, 4):
+            if not recur:
+                return i
+            if not going_to_die(data, i, 3):
                 return i
     for i in apply_filters(grow, data):
-        if not going_to_die(data, i, 4):
+        if not recur:
+            return i
+        if not going_to_die(data, i, 3):
             return i
     # TODO: Add logic to choose different sets of filters
     # TODO: Take into account whether or not another snake
@@ -219,12 +235,8 @@ def get_move(data):
 
 def main():
     data = obj.Data(test.g4)
-    # print(going_to_die(data, data.you.head().left(), 10))
-    affecting_snakes = list(filter(lambda x: x.id != data.you.id and data.you.head().distance_to(x.head()) <= 8, data.board.snakes))
     s = dt.now()
-    for i in apply_filters(aggressive, data):
-        if not going_to_die(data, i, 4):
-            print(i)
+    print(get_move(data))
     s = dt.now()-s
     print(s.microseconds/1000)
     # print(len(data.metadata.safe))
