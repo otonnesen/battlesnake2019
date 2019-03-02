@@ -151,7 +151,7 @@ def going_to_die(data, move, depth):
             data.you.head().distance_to(x.head()) <= 2*depth, data.board.snakes))
     for m in get_potential_moves(data, affecting_snakes):
         state = get_state(data, m)
-        die = going_to_die_r(state, get_move(data, False), depth-1)
+        die = going_to_die_r(state, get_move(data), depth-1)
     # TODO: Use data here to determine whether or not I actually die
     return die
 
@@ -161,7 +161,7 @@ def going_to_die_r(data, move, depth):
         return len(legal_f(data, move.neighbors())) == 0
     for m in get_potential_moves(data, data.board.snakes):
         state = get_state(data, m)
-        die = going_to_die(state, get_move(data, False), depth-1)
+        die = going_to_die(state, get_move(data), depth-1)
     # TODO: Use data here to determine whether or not I actually die
     return die
 
@@ -210,18 +210,10 @@ starving = [food_s, food_f, head_f, legal_f]
 stagnate = [freespace_s, tail_f, avoidfood_f, head_f, legal_f]
 aggressive = [track_s, kill_f, track_f, freespace_f, head_f, legal_f]
 
-def get_move(data, recur=True):
+def get_move(data):
     if foodratio(data) > 50 and len(data.you.body) > 10:
-        for i in apply_filters(aggressive, data): #TODO: For testing; remove
-            if not recur:
-                return i
-            if not going_to_die(data, i, 3):
-                return i
-    for i in apply_filters(grow, data):
-        if not recur:
-            return i
-        if not going_to_die(data, i, 3):
-            return i
+        return apply_filters(aggressive, data)[0] #TODO: For testing; remove
+    return apply_filters(grow, data)[0]
     # TODO: Add logic to choose different sets of filters
     # TODO: Take into account whether or not another snake
     # will get to the food I'm trying to get before me
@@ -234,7 +226,7 @@ def get_move(data, recur=True):
     return apply_filters(stagnate, data)[0]
 
 def main():
-    data = obj.Data(test.g4)
+    data = obj.Data(test.g5)
     s = dt.now()
     print(get_move(data))
     s = dt.now()-s
